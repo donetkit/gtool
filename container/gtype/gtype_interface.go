@@ -2,14 +2,15 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gtype
 
 import (
+	"sync/atomic"
+
 	"github.com/donetkit/gtool/internal/json"
 	"github.com/donetkit/gtool/util/gconv"
-	"sync/atomic"
 )
 
 // Interface is a struct for concurrent-safe operation for type interface{}.
@@ -18,7 +19,7 @@ type Interface struct {
 }
 
 // NewInterface creates and returns a concurrent-safe object for interface{} type,
-// with given initial value <value>.
+// with given initial value `value`.
 func NewInterface(value ...interface{}) *Interface {
 	t := &Interface{}
 	if len(value) > 0 && value[0] != nil {
@@ -32,8 +33,8 @@ func (v *Interface) Clone() *Interface {
 	return NewInterface(v.Val())
 }
 
-// Set atomically stores <value> into t.value and returns the previous value of t.value.
-// Note: The parameter <value> cannot be nil.
+// Set atomically stores `value` into t.value and returns the previous value of t.value.
+// Note: The parameter `value` cannot be nil.
 func (v *Interface) Set(value interface{}) (old interface{}) {
 	old = v.Val()
 	v.value.Store(value)
@@ -66,7 +67,7 @@ func (v *Interface) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// UnmarshalValue is an interface implement which sets any type of value for <v>.
+// UnmarshalValue is an interface implement which sets any type of value for `v`.
 func (v *Interface) UnmarshalValue(value interface{}) error {
 	v.Set(value)
 	return nil

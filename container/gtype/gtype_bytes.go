@@ -2,15 +2,16 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gtype
 
 import (
 	"bytes"
 	"encoding/base64"
-	"github.com/donetkit/gtool/util/gconv"
 	"sync/atomic"
+
+	"github.com/donetkit/gtool/util/gconv"
 )
 
 // Bytes is a struct for concurrent-safe operation for type []byte.
@@ -19,7 +20,7 @@ type Bytes struct {
 }
 
 // NewBytes creates and returns a concurrent-safe object for []byte type,
-// with given initial value <value>.
+// with given initial value `value`.
 func NewBytes(value ...[]byte) *Bytes {
 	t := &Bytes{}
 	if len(value) > 0 {
@@ -33,8 +34,8 @@ func (v *Bytes) Clone() *Bytes {
 	return NewBytes(v.Val())
 }
 
-// Set atomically stores <value> into t.value and returns the previous value of t.value.
-// Note: The parameter <value> cannot be nil.
+// Set atomically stores `value` into t.value and returns the previous value of t.value.
+// Note: The parameter `value` cannot be nil.
 func (v *Bytes) Set(value []byte) (old []byte) {
 	old = v.Val()
 	v.value.Store(value)
@@ -59,7 +60,7 @@ func (v *Bytes) MarshalJSON() ([]byte, error) {
 	val := v.Val()
 	dst := make([]byte, base64.StdEncoding.EncodedLen(len(val)))
 	base64.StdEncoding.Encode(dst, val)
-	return gconv.UnsafeStrToBytes(`"` + gconv.UnsafeBytesToStr(dst) + `"`), nil
+	return []byte(`"` + string(dst) + `"`), nil
 }
 
 // UnmarshalJSON implements the interface UnmarshalJSON for json.Unmarshal.
@@ -73,7 +74,7 @@ func (v *Bytes) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// UnmarshalValue is an interface implement which sets any type of value for <v>.
+// UnmarshalValue is an interface implement which sets any type of value for `v`.
 func (v *Bytes) UnmarshalValue(value interface{}) error {
 	v.Set(gconv.Bytes(value))
 	return nil
