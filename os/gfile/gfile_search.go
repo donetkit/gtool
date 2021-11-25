@@ -2,7 +2,7 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gfile
 
@@ -11,11 +11,13 @@ import (
 	"fmt"
 
 	"github.com/donetkit/gtool/container/garray"
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
 )
 
-// Search searches file by name <name> in following paths with priority:
+// Search searches file by name `name` in following paths with priority:
 // prioritySearchPaths, Pwd()、SelfDir()、MainPkgPath().
-// It returns the absolute file path of <name> if found, or en empty string if not found.
+// It returns the absolute file path of `name` if found, or en empty string if not found.
 func Search(name string, prioritySearchPaths ...string) (realPath string, err error) {
 	// Check if it's a absolute path.
 	realPath = RealPath(name)
@@ -51,7 +53,7 @@ func Search(name string, prioritySearchPaths ...string) (realPath string, err er
 				buffer.WriteString(fmt.Sprintf("\n%d. %s", k+1, v))
 			}
 		})
-		err = fmt.Errorf(buffer.String())
+		err = gerror.NewCode(gcode.CodeOperationFailed, buffer.String())
 	}
 	return
 }

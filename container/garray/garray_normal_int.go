@@ -2,20 +2,22 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package garray
 
 import (
 	"bytes"
 	"fmt"
+	"math"
+	"sort"
+
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
 	"github.com/donetkit/gtool/internal/json"
 	"github.com/donetkit/gtool/internal/rwmutex"
 	"github.com/donetkit/gtool/util/gconv"
 	"github.com/donetkit/gtool/util/grand"
-
-	"math"
-	"sort"
 )
 
 // IntArray is a golang int array with rich features.
@@ -103,7 +105,7 @@ func (a *IntArray) Set(index int, value int) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if index < 0 || index >= len(a.array) {
-		return fmt.Errorf("index %d out of array range %d", index, len(a.array))
+		return gerror.NewCodef(gcode.CodeInvalidParameter, "index %d out of array range %d", index, len(a.array))
 	}
 	a.array[index] = value
 	return nil
@@ -171,7 +173,7 @@ func (a *IntArray) InsertBefore(index int, value int) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if index < 0 || index >= len(a.array) {
-		return fmt.Errorf("index %d out of array range %d", index, len(a.array))
+		return gerror.NewCodef(gcode.CodeInvalidParameter, "index %d out of array range %d", index, len(a.array))
 	}
 	rear := append([]int{}, a.array[index:]...)
 	a.array = append(a.array[0:index], value)
@@ -184,7 +186,7 @@ func (a *IntArray) InsertAfter(index int, value int) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if index < 0 || index >= len(a.array) {
-		return fmt.Errorf("index %d out of array range %d", index, len(a.array))
+		return gerror.NewCodef(gcode.CodeInvalidParameter, "index %d out of array range %d", index, len(a.array))
 	}
 	rear := append([]int{}, a.array[index+1:]...)
 	a.array = append(a.array[0:index+1], value)
@@ -555,7 +557,7 @@ func (a *IntArray) Fill(startIndex int, num int, value int) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if startIndex < 0 || startIndex > len(a.array) {
-		return fmt.Errorf("index %d out of array range %d", startIndex, len(a.array))
+		return gerror.NewCodef(gcode.CodeInvalidParameter, "index %d out of array range %d", startIndex, len(a.array))
 	}
 	for i := startIndex; i < startIndex+num; i++ {
 		if i > len(a.array)-1 {

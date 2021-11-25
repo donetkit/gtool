@@ -2,15 +2,16 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gtimer
 
 import (
 	"container/heap"
-	"github.com/donetkit/gtool/container/gtype"
 	"math"
 	"sync"
+
+	"github.com/donetkit/gtool/container/gtype"
 )
 
 // priorityQueue is an abstract data type similar to a regular queue or stack data structure in which

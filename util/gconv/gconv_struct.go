@@ -2,24 +2,25 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gconv
 
 import (
-	"fmt"
-	"github.com/donetkit/gtool/internal/empty"
-	"github.com/donetkit/gtool/internal/json"
-	"github.com/donetkit/gtool/internal/structs"
 	"reflect"
 	"strings"
 
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
+	"github.com/donetkit/gtool/internal/empty"
+	"github.com/donetkit/gtool/internal/json"
 	"github.com/donetkit/gtool/internal/utils"
+	"github.com/donetkit/gtool/os/gstructs"
 )
 
 // Struct maps the params key-value pairs to the corresponding struct object's attributes.
 // The third parameter `mapping` is unnecessary, indicating the mapping rules between the
-// custom key name and the attribute name(case sensitive).
+// custom key name and the attribute name(case-sensitive).
 //
 // Note:
 // 1. The `params` can be any type of map/struct, usually a map.
@@ -31,11 +32,7 @@ import (
 //    in mapping procedure to do the matching.
 //    It ignores the map key, if it does not match.
 func Struct(params interface{}, pointer interface{}, mapping ...map[string]string) (err error) {
-	var keyToAttributeNameMapping map[string]string
-	if len(mapping) > 0 {
-		keyToAttributeNameMapping = mapping[0]
-	}
-	return doStruct(params, pointer, keyToAttributeNameMapping, "")
+	return Scan(params, pointer, mapping...)
 }
 
 // StructTag acts as Struct but also with support for priority tag feature, which retrieves the
@@ -45,14 +42,46 @@ func StructTag(params interface{}, pointer interface{}, priorityTag string) (err
 	return doStruct(params, pointer, nil, priorityTag)
 }
 
-// StructDeep do Struct function recursively.
-// Deprecated, use Struct instead.
-func StructDeep(params interface{}, pointer interface{}, mapping ...map[string]string) error {
-	var keyToAttributeNameMapping map[string]string
-	if len(mapping) > 0 {
-		keyToAttributeNameMapping = mapping[0]
+// doStructWithJsonCheck checks if given `params` is JSON, it then uses json.Unmarshal doing the converting.
+func doStructWithJsonCheck(params interface{}, pointer interface{}) (err error, ok bool) {
+	switch r := params.(type) {
+	case []byte:
+		if json.Valid(r) {
+			if rv, ok := pointer.(reflect.Value); ok {
+				if rv.Kind() == reflect.Ptr {
+					if rv.IsNil() {
+						return nil, false
+					}
+					return json.UnmarshalUseNumber(r, rv.Interface()), true
+				} else if rv.CanAddr() {
+					return json.UnmarshalUseNumber(r, rv.Addr().Interface()), true
+				}
+			} else {
+				return json.UnmarshalUseNumber(r, pointer), true
+			}
+		}
+	case string:
+		if paramsBytes := []byte(r); json.Valid(paramsBytes) {
+			if rv, ok := pointer.(reflect.Value); ok {
+				if rv.Kind() == reflect.Ptr {
+					if rv.IsNil() {
+						return nil, false
+					}
+					return json.UnmarshalUseNumber(paramsBytes, rv.Interface()), true
+				} else if rv.CanAddr() {
+					return json.UnmarshalUseNumber(paramsBytes, rv.Addr().Interface()), true
+				}
+			} else {
+				return json.UnmarshalUseNumber(paramsBytes, pointer), true
+			}
+		}
+	default:
+		// The `params` might be struct that implements interface function Interface, eg: gvar.Var.
+		if v, ok := params.(iInterface); ok {
+			return doStructWithJsonCheck(v.Interface(), pointer)
+		}
 	}
-	return doStruct(params, pointer, keyToAttributeNameMapping, "")
+	return nil, false
 }
 
 // doStruct is the core internal converting function for any data to struct.
@@ -62,51 +91,32 @@ func doStruct(params interface{}, pointer interface{}, mapping map[string]string
 		return nil
 	}
 	if pointer == nil {
-		return fmt.Errorf("object pointer cannot be nil")
+		return gerror.NewCode(gcode.CodeInvalidParameter, "object pointer cannot be nil")
 	}
 
 	defer func() {
-		// Catch the panic, especially the reflect operation panics.
+		// Catch the panic, especially the reflection operation panics.
 		if exception := recover(); exception != nil {
-			if e, ok := exception.(errorStack); ok {
-				err = e
+			if v, ok := exception.(error); ok && gerror.HasStack(v) {
+				err = v
 			} else {
-				err = fmt.Errorf("%v", exception)
+				err = gerror.NewCodeSkipf(gcode.CodeInternalError, 1, "%+v", exception)
 			}
 		}
 	}()
 
-	// If given `params` is JSON, it then uses json.Unmarshal doing the converting.
-	switch r := params.(type) {
-	case []byte:
-		if json.Valid(r) {
-			if rv, ok := pointer.(reflect.Value); ok {
-				if rv.Kind() == reflect.Ptr {
-					return json.UnmarshalUseNumber(r, rv.Interface())
-				} else if rv.CanAddr() {
-					return json.UnmarshalUseNumber(r, rv.Addr().Interface())
-				}
-			} else {
-				return json.UnmarshalUseNumber(r, pointer)
-			}
-		}
-	case string:
-		if paramsBytes := []byte(r); json.Valid(paramsBytes) {
-			if rv, ok := pointer.(reflect.Value); ok {
-				if rv.Kind() == reflect.Ptr {
-					return json.UnmarshalUseNumber(paramsBytes, rv.Interface())
-				} else if rv.CanAddr() {
-					return json.UnmarshalUseNumber(paramsBytes, rv.Addr().Interface())
-				}
-			} else {
-				return json.UnmarshalUseNumber(paramsBytes, pointer)
-			}
-		}
+	// JSON content converting.
+	err, ok := doStructWithJsonCheck(params, pointer)
+	if err != nil {
+		return err
+	}
+	if ok {
+		return nil
 	}
 
 	var (
 		paramsReflectValue      reflect.Value
-		paramsInterface         interface{} // DO NOT use `params` directly as it might be type of `reflect.Value`
+		paramsInterface         interface{} // DO NOT use `params` directly as it might be type `reflect.Value`
 		pointerReflectValue     reflect.Value
 		pointerReflectKind      reflect.Kind
 		pointerElemReflectValue reflect.Value // The pointed element.
@@ -124,14 +134,15 @@ func doStruct(params interface{}, pointer interface{}, mapping map[string]string
 		pointerReflectValue = reflect.ValueOf(pointer)
 		pointerReflectKind = pointerReflectValue.Kind()
 		if pointerReflectKind != reflect.Ptr {
-			return fmt.Errorf("object pointer should be type of '*struct', but got '%v'", pointerReflectKind)
+			return gerror.NewCodef(gcode.CodeInvalidParameter, "object pointer should be type of '*struct', but got '%v'", pointerReflectKind)
 		}
 		// Using IsNil on reflect.Ptr variable is OK.
 		if !pointerReflectValue.IsValid() || pointerReflectValue.IsNil() {
-			return fmt.Errorf("object pointer cannot be nil")
+			return gerror.NewCode(gcode.CodeInvalidParameter, "object pointer cannot be nil")
 		}
 		pointerElemReflectValue = pointerReflectValue.Elem()
 	}
+
 	// If `params` and `pointer` are the same type, the do directly assignment.
 	// For performance enhancement purpose.
 	if pointerElemReflectValue.IsValid() && pointerElemReflectValue.Type() == paramsReflectValue.Type() {
@@ -140,7 +151,7 @@ func doStruct(params interface{}, pointer interface{}, mapping map[string]string
 	}
 
 	// Normal unmarshalling interfaces checks.
-	if err, ok := bindVarToReflectValueWithInterfaceCheck(pointerReflectValue, paramsInterface); ok {
+	if err, ok = bindVarToReflectValueWithInterfaceCheck(pointerReflectValue, paramsInterface); ok {
 		return err
 	}
 
@@ -151,11 +162,11 @@ func doStruct(params interface{}, pointer interface{}, mapping map[string]string
 			e := reflect.New(pointerElemReflectValue.Type().Elem()).Elem()
 			pointerElemReflectValue.Set(e.Addr())
 		}
-		//if v, ok := pointerElemReflectValue.Interface().(apiUnmarshalValue); ok {
+		// if v, ok := pointerElemReflectValue.Interface().(iUnmarshalValue); ok {
 		//	return v.UnmarshalValue(params)
-		//}
+		// }
 		// Note that it's `pointerElemReflectValue` here not `pointerReflectValue`.
-		if err, ok := bindVarToReflectValueWithInterfaceCheck(pointerElemReflectValue, paramsInterface); ok {
+		if err, ok = bindVarToReflectValueWithInterfaceCheck(pointerElemReflectValue, paramsInterface); ok {
 			return err
 		}
 		// Retrieve its element, may be struct at last.
@@ -166,7 +177,11 @@ func doStruct(params interface{}, pointer interface{}, mapping map[string]string
 	// DO NOT use MapDeep here.
 	paramsMap := Map(paramsInterface)
 	if paramsMap == nil {
-		return fmt.Errorf("convert params to map failed: %v", params)
+		return gerror.NewCodef(
+			gcode.CodeInvalidParameter,
+			`convert params "%#v" to map failed`,
+			params,
+		)
 	}
 
 	// It only performs one converting to the same attribute.
@@ -222,7 +237,7 @@ func doStruct(params interface{}, pointer interface{}, mapping map[string]string
 	} else {
 		priorityTagArray = StructTagPriority
 	}
-	tagToNameMap, err := structs.TagMapName(pointerElemReflectValue, priorityTagArray)
+	tagToNameMap, err := gstructs.TagMapName(pointerElemReflectValue, priorityTagArray)
 	if err != nil {
 		return err
 	}
@@ -287,7 +302,7 @@ func doStruct(params interface{}, pointer interface{}, mapping map[string]string
 		}
 		// Mark it done.
 		doneMap[attrName] = struct{}{}
-		if err := bindVarToStructAttr(pointerElemReflectValue, attrName, mapV, mapping, priorityTag); err != nil {
+		if err := bindVarToStructAttr(pointerElemReflectValue, attrName, mapV, mapping); err != nil {
 			return err
 		}
 	}
@@ -295,7 +310,7 @@ func doStruct(params interface{}, pointer interface{}, mapping map[string]string
 }
 
 // bindVarToStructAttr sets value to struct object attribute by name.
-func bindVarToStructAttr(elem reflect.Value, name string, value interface{}, mapping map[string]string, priorityTag string) (err error) {
+func bindVarToStructAttr(elem reflect.Value, name string, value interface{}, mapping map[string]string) (err error) {
 	structFieldValue := elem.FieldByName(name)
 	if !structFieldValue.IsValid() {
 		return nil
@@ -306,8 +321,8 @@ func bindVarToStructAttr(elem reflect.Value, name string, value interface{}, map
 	}
 	defer func() {
 		if exception := recover(); exception != nil {
-			if err = bindVarToReflectValue(structFieldValue, value, mapping, priorityTag); err != nil {
-				err = fmt.Errorf(`error binding value to attribute "%s %s"`, name, err)
+			if err = bindVarToReflectValue(structFieldValue, value, mapping); err != nil {
+				err = gerror.WrapCodef(gcode.CodeInternalError, err, `error binding value to attribute "%s"`, name)
 			}
 		}
 	}()
@@ -326,7 +341,7 @@ func bindVarToStructAttr(elem reflect.Value, name string, value interface{}, map
 	return nil
 }
 
-// bindVarToReflectValueWithInterfaceCheck does binding using common interfaces checks.
+// bindVarToReflectValueWithInterfaceCheck does bind using common interfaces checks.
 func bindVarToReflectValueWithInterfaceCheck(reflectValue reflect.Value, value interface{}) (err error, ok bool) {
 	var pointer interface{}
 	if reflectValue.Kind() != reflect.Ptr && reflectValue.CanAddr() {
@@ -343,19 +358,43 @@ func bindVarToReflectValueWithInterfaceCheck(reflectValue reflect.Value, value i
 		pointer = reflectValue.Interface()
 	}
 	// UnmarshalValue.
-	if v, ok := pointer.(apiUnmarshalValue); ok {
+	if v, ok := pointer.(iUnmarshalValue); ok {
 		return v.UnmarshalValue(value), ok
 	}
 	// UnmarshalText.
-	if v, ok := pointer.(apiUnmarshalText); ok {
-		if s, ok := value.(string); ok {
-			return v.UnmarshalText([]byte(s)), ok
-		}
+	if v, ok := pointer.(iUnmarshalText); ok {
+		var valueBytes []byte
 		if b, ok := value.([]byte); ok {
-			return v.UnmarshalText(b), ok
+			valueBytes = b
+		} else if s, ok := value.(string); ok {
+			valueBytes = []byte(s)
+		}
+		if len(valueBytes) > 0 {
+			return v.UnmarshalText(valueBytes), ok
 		}
 	}
-	if v, ok := pointer.(apiSet); ok {
+	// UnmarshalJSON.
+	if v, ok := pointer.(iUnmarshalJSON); ok {
+		var valueBytes []byte
+		if b, ok := value.([]byte); ok {
+			valueBytes = b
+		} else if s, ok := value.(string); ok {
+			valueBytes = []byte(s)
+		}
+
+		if len(valueBytes) > 0 {
+			// If it is not a valid JSON string, it then adds char `"` on its both sides to make it is.
+			if !json.Valid(valueBytes) {
+				newValueBytes := make([]byte, len(valueBytes)+2)
+				newValueBytes[0] = '"'
+				newValueBytes[len(newValueBytes)-1] = '"'
+				copy(newValueBytes[1:], valueBytes)
+				valueBytes = newValueBytes
+			}
+			return v.UnmarshalJSON(valueBytes), ok
+		}
+	}
+	if v, ok := pointer.(iSet); ok {
 		v.Set(value)
 		return nil, ok
 	}
@@ -363,16 +402,27 @@ func bindVarToReflectValueWithInterfaceCheck(reflectValue reflect.Value, value i
 }
 
 // bindVarToReflectValue sets `value` to reflect value object `structFieldValue`.
-func bindVarToReflectValue(structFieldValue reflect.Value, value interface{}, mapping map[string]string, priorityTag string) (err error) {
+func bindVarToReflectValue(structFieldValue reflect.Value, value interface{}, mapping map[string]string) (err error) {
+	// JSON content converting.
+	err, ok := doStructWithJsonCheck(value, structFieldValue)
+	if err != nil {
+		return err
+	}
+	if ok {
+		return nil
+	}
+
+	// Common interface check.
 	if err, ok := bindVarToReflectValueWithInterfaceCheck(structFieldValue, value); ok {
 		return err
 	}
+
 	kind := structFieldValue.Kind()
 	// Converting using interface, for some kinds.
 	switch kind {
 	case reflect.Slice, reflect.Array, reflect.Ptr, reflect.Interface:
 		if !structFieldValue.IsNil() {
-			if v, ok := structFieldValue.Interface().(apiSet); ok {
+			if v, ok := structFieldValue.Interface().(iSet); ok {
 				v.Set(value)
 				return nil
 			}
@@ -381,9 +431,12 @@ func bindVarToReflectValue(structFieldValue reflect.Value, value interface{}, ma
 
 	// Converting by kind.
 	switch kind {
+	case reflect.Map:
+		return doMapToMap(value, structFieldValue, mapping)
+
 	case reflect.Struct:
 		// Recursively converting for struct attribute.
-		if err := doStruct(value, structFieldValue, nil, ""); err != nil {
+		if err = doStruct(value, structFieldValue, nil, ""); err != nil {
 			// Note there's reflect conversion mechanism here.
 			structFieldValue.Set(reflect.ValueOf(value).Convert(structFieldValue.Type()))
 		}
@@ -400,14 +453,14 @@ func bindVarToReflectValue(structFieldValue reflect.Value, value interface{}, ma
 				for i := 0; i < v.Len(); i++ {
 					if t.Kind() == reflect.Ptr {
 						e := reflect.New(t.Elem()).Elem()
-						if err := doStruct(v.Index(i).Interface(), e, nil, ""); err != nil {
+						if err = doStruct(v.Index(i).Interface(), e, nil, ""); err != nil {
 							// Note there's reflect conversion mechanism here.
 							e.Set(reflect.ValueOf(v.Index(i).Interface()).Convert(t))
 						}
 						a.Index(i).Set(e.Addr())
 					} else {
 						e := reflect.New(t).Elem()
-						if err := doStruct(v.Index(i).Interface(), e, nil, ""); err != nil {
+						if err = doStruct(v.Index(i).Interface(), e, nil, ""); err != nil {
 							// Note there's reflect conversion mechanism here.
 							e.Set(reflect.ValueOf(v.Index(i).Interface()).Convert(t))
 						}
@@ -419,17 +472,18 @@ func bindVarToReflectValue(structFieldValue reflect.Value, value interface{}, ma
 			a = reflect.MakeSlice(structFieldValue.Type(), 1, 1)
 			t := a.Index(0).Type()
 			if t.Kind() == reflect.Ptr {
+				// Pointer element.
 				e := reflect.New(t.Elem()).Elem()
-				if err := doStruct(value, e, nil, ""); err != nil {
+				if err = doStruct(value, e, nil, ""); err != nil {
 					// Note there's reflect conversion mechanism here.
 					e.Set(reflect.ValueOf(value).Convert(t))
 				}
 				a.Index(0).Set(e.Addr())
 			} else {
+				// Just consider it as struct element. (Although it might be other types but not basic types, eg: map)
 				e := reflect.New(t).Elem()
-				if err := doStruct(value, e, nil, ""); err != nil {
-					// Note there's reflect conversion mechanism here.
-					e.Set(reflect.ValueOf(value).Convert(t))
+				if err = doStruct(value, e, nil, ""); err != nil {
+					return err
 				}
 				a.Index(0).Set(e)
 			}
@@ -443,7 +497,7 @@ func bindVarToReflectValue(structFieldValue reflect.Value, value interface{}, ma
 			return err
 		}
 		elem := item.Elem()
-		if err = bindVarToReflectValue(elem, value, mapping, priorityTag); err == nil {
+		if err = bindVarToReflectValue(elem, value, mapping); err == nil {
 			structFieldValue.Set(elem.Addr())
 		}
 
@@ -460,7 +514,8 @@ func bindVarToReflectValue(structFieldValue reflect.Value, value interface{}, ma
 	default:
 		defer func() {
 			if exception := recover(); exception != nil {
-				err = fmt.Errorf(
+				err = gerror.NewCodef(
+					gcode.CodeInternalError,
 					`cannot convert value "%+v" to type "%s":%+v`,
 					value,
 					structFieldValue.Type().String(),

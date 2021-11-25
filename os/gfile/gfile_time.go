@@ -2,7 +2,7 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gfile
 
@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// MTime returns the modification time of file given by <path> in second.
+// MTime returns the modification time of file given by `path` in second.
 func MTime(path string) time.Time {
 	s, e := os.Stat(path)
 	if e != nil {
@@ -20,7 +20,7 @@ func MTime(path string) time.Time {
 	return s.ModTime()
 }
 
-// MTimestamp returns the modification time of file given by <path> in second.
+// MTimestamp returns the modification time of file given by `path` in second.
 func MTimestamp(path string) int64 {
 	mtime := MTime(path)
 	if mtime.IsZero() {
@@ -29,7 +29,7 @@ func MTimestamp(path string) int64 {
 	return mtime.Unix()
 }
 
-// MTimestampMilli returns the modification time of file given by <path> in millisecond.
+// MTimestampMilli returns the modification time of file given by `path` in millisecond.
 func MTimestampMilli(path string) int64 {
 	mtime := MTime(path)
 	if mtime.IsZero() {

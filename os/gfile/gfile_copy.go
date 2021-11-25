@@ -2,28 +2,30 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gfile
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
 )
 
-// Copy file/directory from <src> to <dst>.
+// Copy file/directory from `src` to `dst`.
 //
-// If <src> is file, it calls CopyFile to implements copy feature,
+// If `src` is file, it calls CopyFile to implements copy feature,
 // or else it calls CopyDir.
 func Copy(src string, dst string) error {
 	if src == "" {
-		return fmt.Errorf("source path cannot be empty")
+		return gerror.NewCode(gcode.CodeInvalidParameter, "source path cannot be empty")
 	}
 	if dst == "" {
-		return fmt.Errorf("destination path cannot be empty")
+		return gerror.NewCode(gcode.CodeInvalidParameter, "destination path cannot be empty")
 	}
 	if IsFile(src) {
 		return CopyFile(src, dst)
@@ -31,18 +33,18 @@ func Copy(src string, dst string) error {
 	return CopyDir(src, dst)
 }
 
-// CopyFile copies the contents of the file named <src> to the file named
-// by <dst>. The file will be created if it does not exist. If the
+// CopyFile copies the contents of the file named `src` to the file named
+// by `dst`. The file will be created if it does not exist. If the
 // destination file exists, all it's contents will be replaced by the contents
 // of the source file. The file mode will be copied from the source and
 // the copied data is synced/flushed to stable storage.
 // Thanks: https://gist.github.com/r0l1/92462b38df26839a3ca324697c8cba04
 func CopyFile(src, dst string) (err error) {
 	if src == "" {
-		return fmt.Errorf("source file cannot be empty")
+		return gerror.NewCode(gcode.CodeInvalidParameter, "source file cannot be empty")
 	}
 	if dst == "" {
-		return fmt.Errorf("destination file cannot be empty")
+		return gerror.NewCode(gcode.CodeInvalidParameter, "destination file cannot be empty")
 	}
 	// If src and dst are the same path, it does nothing.
 	if src == dst {
@@ -86,10 +88,10 @@ func CopyFile(src, dst string) (err error) {
 // Note that, the Source directory must exist and symlinks are ignored and skipped.
 func CopyDir(src string, dst string) (err error) {
 	if src == "" {
-		return fmt.Errorf("source directory cannot be empty")
+		return gerror.NewCode(gcode.CodeInvalidParameter, "source directory cannot be empty")
 	}
 	if dst == "" {
-		return fmt.Errorf("destination directory cannot be empty")
+		return gerror.NewCode(gcode.CodeInvalidParameter, "destination directory cannot be empty")
 	}
 	// If src and dst are the same path, it does nothing.
 	if src == dst {
@@ -102,7 +104,7 @@ func CopyDir(src string, dst string) (err error) {
 		return err
 	}
 	if !si.IsDir() {
-		return fmt.Errorf("source is not a directory")
+		return gerror.NewCode(gcode.CodeInvalidParameter, "source is not a directory")
 	}
 	if !Exists(dst) {
 		err = os.MkdirAll(dst, DefaultPermCopy)

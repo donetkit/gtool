@@ -2,7 +2,7 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gregex
 
@@ -20,7 +20,7 @@ var (
 	regexMap = make(map[string]*regexp.Regexp)
 )
 
-// getRegexp returns *regexp.Regexp object with given <pattern>.
+// getRegexp returns *regexp.Regexp object with given `pattern`.
 // It uses cache to enhance the performance for compiling regular expression pattern,
 // which means, it will return the same *regexp.Regexp object with the same regular
 // expression pattern.

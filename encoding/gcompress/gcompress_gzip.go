@@ -2,22 +2,23 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gcompress
 
 import (
 	"bytes"
 	"compress/gzip"
-	"github.com/donetkit/gtool/os/gfile"
 	"io"
+
+	"github.com/donetkit/gtool/os/gfile"
 )
 
-// Gzip compresses <data> using gzip algorithm.
-// The optional parameter <level> specifies the compression level from
+// Gzip compresses `data` using gzip algorithm.
+// The optional parameter `level` specifies the compression level from
 // 1 to 9 which means from none to the best compression.
 //
-// Note that it returns error if given <level> is invalid.
+// Note that it returns error if given `level` is invalid.
 func Gzip(data []byte, level ...int) ([]byte, error) {
 	var (
 		writer *gzip.Writer
@@ -41,7 +42,7 @@ func Gzip(data []byte, level ...int) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// GzipFile compresses the file <src> to <dst> using gzip algorithm.
+// GzipFile compresses the file `src` to `dst` using gzip algorithm.
 func GzipFile(src, dst string, level ...int) error {
 	var (
 		writer *gzip.Writer
@@ -75,7 +76,7 @@ func GzipFile(src, dst string, level ...int) error {
 	return nil
 }
 
-// UnGzip decompresses <data> with gzip algorithm.
+// UnGzip decompresses `data` with gzip algorithm.
 func UnGzip(data []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	reader, err := gzip.NewReader(bytes.NewReader(data))
@@ -91,7 +92,7 @@ func UnGzip(data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// UnGzip decompresses file <src> to <dst> using gzip algorithm.
+// UnGzipFile decompresses file `src` to `dst` using gzip algorithm.
 func UnGzipFile(src, dst string) error {
 	srcFile, err := gfile.Open(src)
 	if err != nil {

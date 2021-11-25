@@ -2,7 +2,7 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gbinary
 
@@ -13,8 +13,8 @@ import (
 	"math"
 )
 
-// LeEncode encodes one or multiple <values> into bytes using LittleEndian.
-// It uses type asserting checking the type of each value of <values> and internally
+// LeEncode encodes one or multiple `values` into bytes using LittleEndian.
+// It uses type asserting checking the type of each value of `values` and internally
 // calls corresponding converting function do the bytes converting.
 //
 // It supports common variable type asserting, and finally it uses fmt.Sprintf converting

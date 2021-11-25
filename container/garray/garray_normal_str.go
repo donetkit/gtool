@@ -2,21 +2,23 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package garray
 
 import (
 	"bytes"
-	"fmt"
+	"math"
+	"sort"
+	"strings"
+
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
 	"github.com/donetkit/gtool/internal/json"
 	"github.com/donetkit/gtool/internal/rwmutex"
 	"github.com/donetkit/gtool/text/gstr"
 	"github.com/donetkit/gtool/util/gconv"
 	"github.com/donetkit/gtool/util/grand"
-	"math"
-	"sort"
-	"strings"
 )
 
 // StrArray is a golang string array with rich features.
@@ -89,7 +91,7 @@ func (a *StrArray) Set(index int, value string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if index < 0 || index >= len(a.array) {
-		return fmt.Errorf("index %d out of array range %d", index, len(a.array))
+		return gerror.NewCodef(gcode.CodeInvalidParameter, "index %d out of array range %d", index, len(a.array))
 	}
 	a.array[index] = value
 	return nil
@@ -158,7 +160,7 @@ func (a *StrArray) InsertBefore(index int, value string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if index < 0 || index >= len(a.array) {
-		return fmt.Errorf("index %d out of array range %d", index, len(a.array))
+		return gerror.NewCodef(gcode.CodeInvalidParameter, "index %d out of array range %d", index, len(a.array))
 	}
 	rear := append([]string{}, a.array[index:]...)
 	a.array = append(a.array[0:index], value)
@@ -171,7 +173,7 @@ func (a *StrArray) InsertAfter(index int, value string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if index < 0 || index >= len(a.array) {
-		return fmt.Errorf("index %d out of array range %d", index, len(a.array))
+		return gerror.NewCodef(gcode.CodeInvalidParameter, "index %d out of array range %d", index, len(a.array))
 	}
 	rear := append([]string{}, a.array[index+1:]...)
 	a.array = append(a.array[0:index+1], value)
@@ -405,9 +407,8 @@ func (a *StrArray) SubSlice(offset int, length ...int) []string {
 		s := make([]string, size)
 		copy(s, a.array[offset:])
 		return s
-	} else {
-		return a.array[offset:end]
 	}
+	return a.array[offset:end]
 }
 
 // Append is alias of PushRight,please See PushRight.
@@ -558,7 +559,7 @@ func (a *StrArray) Fill(startIndex int, num int, value string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if startIndex < 0 || startIndex > len(a.array) {
-		return fmt.Errorf("index %d out of array range %d", startIndex, len(a.array))
+		return gerror.NewCodef(gcode.CodeInvalidParameter, "index %d out of array range %d", startIndex, len(a.array))
 	}
 	for i := startIndex; i < startIndex+num; i++ {
 		if i > len(a.array)-1 {

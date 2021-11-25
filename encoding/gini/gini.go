@@ -2,7 +2,7 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 // Package gini provides accessing and converting for INI content.
 package gini
@@ -11,9 +11,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/donetkit/gtool/internal/json"
 	"io"
 	"strings"
+
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
+	"github.com/donetkit/gtool/internal/json"
 )
 
 // Decode converts INI format to map.
@@ -63,13 +66,13 @@ func Decode(data []byte) (res map[string]interface{}, err error) {
 
 		if strings.Contains(lineStr, "=") && haveSection {
 			values := strings.Split(lineStr, "=")
-			fieldMap[strings.TrimSpace(values[0])] = strings.TrimSpace(strings.Join(values[1:], ""))
+			fieldMap[strings.TrimSpace(values[0])] = strings.TrimSpace(strings.Join(values[1:], "="))
 			res[section] = fieldMap
 		}
 	}
 
 	if haveSection == false {
-		return nil, fmt.Errorf("failed to parse INI file, section not found")
+		return nil, gerror.NewCode(gcode.CodeInvalidParameter, "failed to parse INI file, section not found")
 	}
 	return res, nil
 }
@@ -77,24 +80,23 @@ func Decode(data []byte) (res map[string]interface{}, err error) {
 // Encode converts map to INI format.
 func Encode(data map[string]interface{}) (res []byte, err error) {
 	w := new(bytes.Buffer)
-
 	w.WriteString("; this ini file is produced by package gini\n")
 	for k, v := range data {
 		n, err := w.WriteString(fmt.Sprintf("[%s]\n", k))
 		if err != nil || n == 0 {
-			return nil, fmt.Errorf("write data failed. %v", err)
+			return nil, gerror.WrapCodef(gcode.CodeInternalError, err, "write data failed")
 		}
 		for kk, vv := range v.(map[string]interface{}) {
 			n, err := w.WriteString(fmt.Sprintf("%s=%s\n", kk, vv.(string)))
 			if err != nil || n == 0 {
-				return nil, fmt.Errorf("write data failed. %v", err)
+				return nil, gerror.WrapCodef(gcode.CodeInternalError, err, "write data failed")
 			}
 		}
 	}
 	res = make([]byte, w.Len())
 	n, err := w.Read(res)
 	if err != nil || n == 0 {
-		return nil, fmt.Errorf("write data failed. %v", err)
+		return nil, gerror.WrapCodef(gcode.CodeInternalError, err, "write data failed")
 	}
 
 	return res, nil

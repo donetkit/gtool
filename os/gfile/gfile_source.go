@@ -2,17 +2,17 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gfile
 
 import (
-	"github.com/donetkit/gtool/text/gstr"
 	"os"
 	"runtime"
 	"strings"
 
 	"github.com/donetkit/gtool/text/gregex"
+	"github.com/donetkit/gtool/text/gstr"
 )
 
 var (

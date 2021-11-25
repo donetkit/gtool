@@ -2,12 +2,14 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gutil
 
 import (
 	"reflect"
+
+	"github.com/donetkit/gtool/internal/utils"
 )
 
 // ListItemValues retrieves and returns the elements of all item struct/map with key `key`.
@@ -129,4 +131,10 @@ func ListItemValuesUnique(list interface{}, key string, subKey ...interface{}) [
 		}
 	}
 	return values
+}
+
+// ListToMapByKey converts `list` to a map[string]interface{} of which key is specified by `key`.
+// Note that the item value may be type of slice.
+func ListToMapByKey(list []map[string]interface{}, key string) map[string]interface{} {
+	return utils.ListToMapByKey(list, key)
 }

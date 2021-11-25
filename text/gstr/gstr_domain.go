@@ -2,14 +2,14 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gstr
 
 import "strings"
 
-// IsSubDomain checks whether <subDomain> is sub-domain of mainDomain.
-// It supports '*' in <mainDomain>.
+// IsSubDomain checks whether `subDomain` is sub-domain of mainDomain.
+// It supports '*' in `mainDomain`.
 func IsSubDomain(subDomain string, mainDomain string) bool {
 	if p := strings.IndexByte(subDomain, ':'); p != -1 {
 		subDomain = subDomain[0:p]

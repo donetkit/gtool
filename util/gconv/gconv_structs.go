@@ -2,23 +2,22 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gconv
 
 import (
-	"fmt"
-	"github.com/donetkit/gtool/internal/json"
 	"reflect"
+
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
+	"github.com/donetkit/gtool/internal/json"
 )
 
 // Structs converts any slice to given struct slice.
+// Also see Scan, Struct.
 func Structs(params interface{}, pointer interface{}, mapping ...map[string]string) (err error) {
-	var keyToAttributeNameMapping map[string]string
-	if len(mapping) > 0 {
-		keyToAttributeNameMapping = mapping[0]
-	}
-	return doStructs(params, pointer, keyToAttributeNameMapping, "")
+	return Scan(params, pointer, mapping...)
 }
 
 // StructsTag acts as Structs but also with support for priority tag feature, which retrieves the
@@ -26,16 +25,6 @@ func Structs(params interface{}, pointer interface{}, mapping ...map[string]stri
 // The parameter `priorityTag` supports multiple tags that can be joined with char ','.
 func StructsTag(params interface{}, pointer interface{}, priorityTag string) (err error) {
 	return doStructs(params, pointer, nil, priorityTag)
-}
-
-// StructsDeep converts any slice to given struct slice recursively.
-// Deprecated, use Structs instead.
-func StructsDeep(params interface{}, pointer interface{}, mapping ...map[string]string) (err error) {
-	var keyToAttributeNameMapping map[string]string
-	if len(mapping) > 0 {
-		keyToAttributeNameMapping = mapping[0]
-	}
-	return doStructs(params, pointer, keyToAttributeNameMapping, "")
 }
 
 // doStructs converts any slice to given struct slice.
@@ -51,7 +40,7 @@ func doStructs(params interface{}, pointer interface{}, mapping map[string]strin
 		return nil
 	}
 	if pointer == nil {
-		return fmt.Errorf("object pointer cannot be nil")
+		return gerror.NewCode(gcode.CodeInvalidParameter, "object pointer cannot be nil")
 	}
 
 	if doStructsByDirectReflectSet(params, pointer) {
@@ -61,10 +50,10 @@ func doStructs(params interface{}, pointer interface{}, mapping map[string]strin
 	defer func() {
 		// Catch the panic, especially the reflect operation panics.
 		if exception := recover(); exception != nil {
-			if e, ok := exception.(errorStack); ok {
-				err = e
+			if v, ok := exception.(error); ok && gerror.HasStack(v) {
+				err = v
 			} else {
-				err = fmt.Errorf("%v", exception)
+				err = gerror.NewCodeSkipf(gcode.CodeInternalError, 1, "%+v", exception)
 			}
 		}
 	}()
@@ -96,7 +85,7 @@ func doStructs(params interface{}, pointer interface{}, mapping map[string]strin
 	if !ok {
 		pointerRv = reflect.ValueOf(pointer)
 		if kind := pointerRv.Kind(); kind != reflect.Ptr {
-			return fmt.Errorf("pointer should be type of pointer, but got: %v", kind)
+			return gerror.NewCodef(gcode.CodeInvalidParameter, "pointer should be type of pointer, but got: %v", kind)
 		}
 	}
 	// Converting `params` to map slice.

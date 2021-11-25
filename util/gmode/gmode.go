@@ -2,14 +2,17 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 // Package gmode provides release mode management for project.
 //
 // It uses string to mark the mode instead of integer, which is convenient for configuration.
 package gmode
 
-import "os"
+import (
+	"github.com/donetkit/gtool/os/gcmd"
+	"os"
+)
 
 const (
 	NOT_SET       = "not-set"
@@ -17,7 +20,7 @@ const (
 	TESTING       = "testing"
 	STAGING       = "staging"
 	PRODUCT       = "product"
-	commandEnvKey = "gmode"
+	commandEnvKey = "ENV"
 )
 
 var (
@@ -54,16 +57,12 @@ func SetProduct() {
 func Mode() string {
 	// If current mode is not set, do this auto check.
 	if currentMode == NOT_SET {
-		if v := os.Getenv(commandEnvKey); v != "" {
+		if v := gcmd.GetOptWithEnv(commandEnvKey).String(); v != "" {
 			// Mode configured from command argument of environment.
 			currentMode = v
 		} else {
 			// If there are source codes found, it's in develop mode, or else in product mode.
-			//if gfile.Exists(gdebug.CallerFilePath()) {
-			//	currentMode = DEVELOP
-			//} else {
-			//	currentMode = PRODUCT
-			//}
+			currentMode = os.Getenv(commandEnvKey)
 		}
 	}
 	return currentMode

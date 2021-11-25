@@ -2,22 +2,24 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gfile
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"os/exec"
 	"os/user"
 	"runtime"
 	"strings"
+
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
 )
 
 // Home returns absolute path of current user's home directory.
-// The optional parameter <names> specifies the its sub-folders/sub-files,
+// The optional parameter `names` specifies the sub-folders/sub-files,
 // which will be joined with current system separator and returned with the path.
 func Home(names ...string) (string, error) {
 	path, err := getHomePath()
@@ -36,7 +38,7 @@ func getHomePath() (string, error) {
 	if nil == err {
 		return u.HomeDir, nil
 	}
-	if "windows" == runtime.GOOS {
+	if runtime.GOOS == "windows" {
 		return homeWindows()
 	}
 	return homeUnix()
@@ -56,7 +58,7 @@ func homeUnix() (string, error) {
 
 	result := strings.TrimSpace(stdout.String())
 	if result == "" {
-		return "", fmt.Errorf("blank output when reading home directory")
+		return "", gerror.NewCode(gcode.CodeInternalError, "blank output when reading home directory")
 	}
 
 	return result, nil
@@ -73,7 +75,7 @@ func homeWindows() (string, error) {
 		home = os.Getenv("USERPROFILE")
 	}
 	if home == "" {
-		return "", fmt.Errorf("HOMEDRIVE, HOMEPATH, and USERPROFILE are blank")
+		return "", gerror.NewCode(gcode.CodeOperationFailed, "HOMEDRIVE, HOMEPATH, and USERPROFILE are blank")
 	}
 
 	return home, nil

@@ -2,53 +2,41 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 // Package gmeta provides embedded meta data feature for struct.
 package gmeta
 
 import (
-	"github.com/donetkit/gtool/container/gmap"
 	"github.com/donetkit/gtool/container/gvar"
-	"github.com/donetkit/gtool/internal/structs"
+	"github.com/donetkit/gtool/os/gstructs"
 )
 
-// Meta is used as an embedded attribute for struct to enabled meta data feature.
+// Meta is used as an embedded attribute for struct to enabled metadata feature.
 type Meta struct{}
 
 const (
-	// metaAttributeName is the attribute name of meta data in struct.
+	// metaAttributeName is the attribute name of metadata in struct.
 	metaAttributeName = "Meta"
 )
 
-var (
-	// metaDataCacheMap is a cache map for struct type to enhance the performance.
-	metaDataCacheMap = gmap.NewStrAnyMap(true)
-)
-
-// Data retrieves and returns all meta data from `object`.
-// It automatically parses and caches the tag string from "Mata" attribute as its meta data.
-func Data(object interface{}) map[string]interface{} {
-	reflectType, err := structs.StructType(object)
+// Data retrieves and returns all metadata from `object`.
+func Data(object interface{}) map[string]string {
+	reflectType, err := gstructs.StructType(object)
 	if err != nil {
-		panic(err)
+		return nil
 	}
-	return metaDataCacheMap.GetOrSetFuncLock(reflectType.Signature(), func() interface{} {
-		if field, ok := reflectType.FieldByName(metaAttributeName); ok {
-			var (
-				tags = structs.ParseTag(string(field.Tag))
-				data = make(map[string]interface{}, len(tags))
-			)
-			for k, v := range tags {
-				data[k] = v
-			}
-			return data
-		}
-		return map[string]interface{}{}
-	}).(map[string]interface{})
+	if field, ok := reflectType.FieldByName(metaAttributeName); ok {
+		return gstructs.ParseTag(string(field.Tag))
+	}
+	return map[string]string{}
 }
 
-// Get retrieves and returns specified meta data by `key` from `object`.
+// Get retrieves and returns specified metadata by `key` from `object`.
 func Get(object interface{}, key string) *gvar.Var {
-	return gvar.New(Data(object)[key])
+	v, ok := Data(object)[key]
+	if !ok {
+		return nil
+	}
+	return gvar.New(v)
 }

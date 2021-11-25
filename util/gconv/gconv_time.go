@@ -2,7 +2,7 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gconv
 
@@ -51,7 +51,7 @@ func GTime(any interface{}, format ...string) *gtime.Time {
 	if any == nil {
 		return nil
 	}
-	if v, ok := any.(apiGTime); ok {
+	if v, ok := any.(iGTime); ok {
 		return v.GTime(format...)
 	}
 	// It's already this type.

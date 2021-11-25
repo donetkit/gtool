@@ -2,7 +2,7 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package utils
 
@@ -11,8 +11,12 @@ import (
 )
 
 const (
-	commandEnvKeyForDebugKey = "gf.debug"                         // Debug key for checking if in debug mode.
-	StackFilterKeyForGoFrame = "github.com/donetkit/gtool/gtool@" // Stack filtering key for all GoFrame module paths.
+	// Debug key for checking if in debug mode.
+	commandEnvKeyForDebugKey = "gf.debug"
+
+	// StackFilterKeyForGoFrame is the stack filtering key for all GoFrame module paths.
+	// Eg: .../pkg/mod/github.com/donetkit/gtool@v2.0.0-20211011134327-54dd11f51122/debug/gdebug/gdebug_caller.go
+	StackFilterKeyForGoFrame = "github.com/gogf/gf/v"
 )
 
 var (

@@ -2,13 +2,14 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gutil
 
 import (
-	"github.com/donetkit/gtool/util/gconv"
 	"reflect"
+
+	"github.com/donetkit/gtool/util/gconv"
 )
 
 // StructToSlice converts struct to slice of which all keys and values are its items.

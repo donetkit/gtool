@@ -2,7 +2,7 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 // Package gcompress provides kinds of compression algorithms for binary/bytes data.
 package gcompress
@@ -13,7 +13,7 @@ import (
 	"io"
 )
 
-// Zlib compresses <data> with zlib algorithm.
+// Zlib compresses `data` with zlib algorithm.
 func Zlib(data []byte) ([]byte, error) {
 	if data == nil || len(data) < 13 {
 		return data, nil
@@ -30,7 +30,7 @@ func Zlib(data []byte) ([]byte, error) {
 	return in.Bytes(), nil
 }
 
-// UnZlib decompresses <data> with zlib algorithm.
+// UnZlib decompresses `data` with zlib algorithm.
 func UnZlib(data []byte) ([]byte, error) {
 	if data == nil || len(data) < 13 {
 		return data, nil

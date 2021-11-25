@@ -2,12 +2,13 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gstr
 
 import (
-	"fmt"
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
 	"net/url"
 	"strings"
 )
@@ -116,7 +117,11 @@ func build(result map[string]interface{}, keys []string, value interface{}) erro
 		}
 		children, ok := val.([]interface{})
 		if !ok {
-			return fmt.Errorf("expected type '[]interface{}' for key '%s', but got '%T'", key, val)
+			return gerror.NewCodef(
+				gcode.CodeInvalidParameter,
+				"expected type '[]interface{}' for key '%s', but got '%T'",
+				key, val,
+			)
 		}
 		result[key] = append(children, value)
 		return nil
@@ -131,7 +136,11 @@ func build(result map[string]interface{}, keys []string, value interface{}) erro
 		}
 		children, ok := val.([]interface{})
 		if !ok {
-			return fmt.Errorf("expected type '[]interface{}' for key '%s', but got '%T'", key, val)
+			return gerror.NewCodef(
+				gcode.CodeInvalidParameter,
+				"expected type '[]interface{}' for key '%s', but got '%T'",
+				key, val,
+			)
 		}
 		if l := len(children); l > 0 {
 			if child, ok := children[l-1].(map[string]interface{}); ok {
@@ -155,7 +164,11 @@ func build(result map[string]interface{}, keys []string, value interface{}) erro
 	}
 	children, ok := val.(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("expected type 'map[string]interface{}' for key '%s', but got '%T'", key, val)
+		return gerror.NewCodef(
+			gcode.CodeInvalidParameter,
+			"expected type 'map[string]interface{}' for key '%s', but got '%T'",
+			key, val,
+		)
 	}
 	if err := build(children, keys[1:], value); err != nil {
 		return err

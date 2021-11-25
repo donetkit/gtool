@@ -2,13 +2,16 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package garray
 
 import (
 	"bytes"
 	"fmt"
+	"math"
+	"sort"
+
 	"github.com/donetkit/gtool/internal/empty"
 	"github.com/donetkit/gtool/internal/json"
 	"github.com/donetkit/gtool/internal/rwmutex"
@@ -16,8 +19,6 @@ import (
 	"github.com/donetkit/gtool/util/gconv"
 	"github.com/donetkit/gtool/util/grand"
 	"github.com/donetkit/gtool/util/gutil"
-	"math"
-	"sort"
 )
 
 // SortedArray is a golang sorted array with rich features.

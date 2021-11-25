@@ -2,18 +2,19 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package utils
 
 import (
-	"github.com/donetkit/gtool/internal/empty"
 	"reflect"
+
+	"github.com/donetkit/gtool/internal/empty"
 )
 
 // IsNil checks whether `value` is nil.
 func IsNil(value interface{}) bool {
-	return value == nil
+	return empty.IsNil(value)
 }
 
 // IsEmpty checks whether `value` is empty.

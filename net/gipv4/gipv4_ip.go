@@ -2,16 +2,18 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 //
 
 package gipv4
 
 import (
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
+
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
 )
 
 // GetIpArray retrieves and returns all the ip of current host.
@@ -38,7 +40,7 @@ func GetIntranetIp() (ip string, err error) {
 		return "", err
 	}
 	if len(ips) == 0 {
-		return "", fmt.Errorf("no intranet ip found")
+		return "", gerror.NewCode(gcode.CodeOperationFailed, "no intranet ip found")
 	}
 	return ips[0], nil
 }

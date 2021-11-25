@@ -2,16 +2,11 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package garray
 
 import "strings"
-
-// apiInterfaces is used for type assert api for Interfaces.
-type apiInterfaces interface {
-	Interfaces() []interface{}
-}
 
 // defaultComparatorInt for int comparison.
 func defaultComparatorInt(a, b int) int {

@@ -1,19 +1,22 @@
-package g
-
 // Copyright GoFrame Author(https://goframe.org). All Rights Reserved.
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
 // You can obtain one at https://github.com/gogf/gf.
 
+package g
+
 import (
 	"context"
+
 	"github.com/donetkit/gtool/container/gvar"
+	"github.com/donetkit/gtool/util/gmeta"
 )
 
 type (
-	Var = gvar.Var        // Var is a universal variable interface, like generics.
-	Ctx = context.Context // Ctx is alias of frequently-used context.Context.
+	Var  = gvar.Var        // Var is a universal variable interface, like generics.
+	Ctx  = context.Context // Ctx is alias of frequently-used type context.Context.
+	Meta = gmeta.Meta      // Meta is alias of frequently-used type gmeta.Meta.
 )
 
 type (

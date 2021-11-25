@@ -2,7 +2,7 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gfile
 
@@ -14,7 +14,7 @@ import (
 
 // fileSortFunc is the comparison function for files.
 // It sorts the array in order of: directory -> file.
-// If <path1> and <path2> are the same type, it then sorts them as strings.
+// If `path1` and `path2` are the same type, it then sorts them as strings.
 func fileSortFunc(path1, path2 string) int {
 	isDirPath1 := IsDir(path1)
 	isDirPath2 := IsDir(path2)
@@ -31,8 +31,8 @@ func fileSortFunc(path1, path2 string) int {
 	}
 }
 
-// SortFiles sorts the <files> in order of: directory -> file.
-// Note that the item of <files> should be absolute path.
+// SortFiles sorts the `files` in order of: directory -> file.
+// Note that the item of `files` should be absolute path.
 func SortFiles(files []string) []string {
 	array := garray.NewSortedStrArrayComparator(fileSortFunc)
 	array.Add(files...)

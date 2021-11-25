@@ -2,16 +2,18 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 package gfile
 
 import (
-	"fmt"
-	"github.com/donetkit/gtool/text/gstr"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
+	"github.com/donetkit/gtool/text/gstr"
 )
 
 const (
@@ -19,10 +21,10 @@ const (
 	maxScanDepth = 100000
 )
 
-// ScanDir returns all sub-files with absolute paths of given <path>,
-// It scans directory recursively if given parameter <recursive> is true.
+// ScanDir returns all sub-files with absolute paths of given `path`,
+// It scans directory recursively if given parameter `recursive` is true.
 //
-// The pattern parameter <pattern> supports multiple file name patterns,
+// The pattern parameter `pattern` supports multiple file name patterns,
 // using the ',' symbol to separate multiple patterns.
 func ScanDir(path string, pattern string, recursive ...bool) ([]string, error) {
 	isRecursive := false
@@ -39,18 +41,18 @@ func ScanDir(path string, pattern string, recursive ...bool) ([]string, error) {
 	return list, nil
 }
 
-// ScanDirFunc returns all sub-files with absolute paths of given <path>,
-// It scans directory recursively if given parameter <recursive> is true.
+// ScanDirFunc returns all sub-files with absolute paths of given `path`,
+// It scans directory recursively if given parameter `recursive` is true.
 //
-// The pattern parameter <pattern> supports multiple file name patterns, using the ','
+// The pattern parameter `pattern` supports multiple file name patterns, using the ','
 // symbol to separate multiple patterns.
 //
-// The parameter <recursive> specifies whether scanning the <path> recursively, which
+// The parameter `recursive` specifies whether scanning the `path` recursively, which
 // means it scans its sub-files and appends the files path to result array if the sub-file
 // is also a folder. It is false in default.
 //
-// The parameter <handler> specifies the callback function handling each sub-file path of
-// the <path> and its sub-folders. It ignores the sub-file path if <handler> returns an empty
+// The parameter `handler` specifies the callback function handling each sub-file path of
+// the `path` and its sub-folders. It ignores the sub-file path if `handler` returns an empty
 // string, or else it appends the sub-file path to result slice.
 func ScanDirFunc(path string, pattern string, recursive bool, handler func(path string) string) ([]string, error) {
 	list, err := doScanDir(0, path, pattern, recursive, handler)
@@ -63,10 +65,10 @@ func ScanDirFunc(path string, pattern string, recursive bool, handler func(path 
 	return list, nil
 }
 
-// ScanDirFile returns all sub-files with absolute paths of given <path>,
-// It scans directory recursively if given parameter <recursive> is true.
+// ScanDirFile returns all sub-files with absolute paths of given `path`,
+// It scans directory recursively if given parameter `recursive` is true.
 //
-// The pattern parameter <pattern> supports multiple file name patterns,
+// The pattern parameter `pattern` supports multiple file name patterns,
 // using the ',' symbol to separate multiple patterns.
 //
 // Note that it returns only files, exclusive of directories.
@@ -90,21 +92,21 @@ func ScanDirFile(path string, pattern string, recursive ...bool) ([]string, erro
 	return list, nil
 }
 
-// ScanDirFileFunc returns all sub-files with absolute paths of given <path>,
-// It scans directory recursively if given parameter <recursive> is true.
+// ScanDirFileFunc returns all sub-files with absolute paths of given `path`,
+// It scans directory recursively if given parameter `recursive` is true.
 //
-// The pattern parameter <pattern> supports multiple file name patterns, using the ','
+// The pattern parameter `pattern` supports multiple file name patterns, using the ','
 // symbol to separate multiple patterns.
 //
-// The parameter <recursive> specifies whether scanning the <path> recursively, which
+// The parameter `recursive` specifies whether scanning the `path` recursively, which
 // means it scans its sub-files and appends the files path to result array if the sub-file
 // is also a folder. It is false in default.
 //
-// The parameter <handler> specifies the callback function handling each sub-file path of
-// the <path> and its sub-folders. It ignores the sub-file path if <handler> returns an empty
+// The parameter `handler` specifies the callback function handling each sub-file path of
+// the `path` and its sub-folders. It ignores the sub-file path if `handler` returns an empty
 // string, or else it appends the sub-file path to result slice.
 //
-// Note that the parameter <path> for <handler> is not a directory but a file.
+// Note that the parameter `path` for `handler` is not a directory but a file.
 // It returns only files, exclusive of directories.
 func ScanDirFileFunc(path string, pattern string, recursive bool, handler func(path string) string) ([]string, error) {
 	list, err := doScanDir(0, path, pattern, recursive, func(path string) string {
@@ -125,19 +127,19 @@ func ScanDirFileFunc(path string, pattern string, recursive bool, handler func(p
 // doScanDir is an internal method which scans directory and returns the absolute path
 // list of files that are not sorted.
 //
-// The pattern parameter <pattern> supports multiple file name patterns, using the ','
+// The pattern parameter `pattern` supports multiple file name patterns, using the ','
 // symbol to separate multiple patterns.
 //
-// The parameter <recursive> specifies whether scanning the <path> recursively, which
+// The parameter `recursive` specifies whether scanning the `path` recursively, which
 // means it scans its sub-files and appends the files path to result array if the sub-file
 // is also a folder. It is false in default.
 //
-// The parameter <handler> specifies the callback function handling each sub-file path of
-// the <path> and its sub-folders. It ignores the sub-file path if <handler> returns an empty
+// The parameter `handler` specifies the callback function handling each sub-file path of
+// the `path` and its sub-folders. It ignores the sub-file path if `handler` returns an empty
 // string, or else it appends the sub-file path to result slice.
 func doScanDir(depth int, path string, pattern string, recursive bool, handler func(path string) string) ([]string, error) {
 	if depth >= maxScanDepth {
-		return nil, fmt.Errorf("directory scanning exceeds max recursive depth: %d", maxScanDepth)
+		return nil, gerror.NewCodef(gcode.CodeOperationFailed, "directory scanning exceeds max recursive depth: %d", maxScanDepth)
 	}
 	list := ([]string)(nil)
 	file, err := os.Open(path)

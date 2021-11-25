@@ -2,17 +2,19 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 // Package gpool provides object-reusable concurrent-safe pool.
 package gpool
 
 import (
-	"fmt"
+	"context"
 	"time"
 
 	"github.com/donetkit/gtool/container/glist"
 	"github.com/donetkit/gtool/container/gtype"
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
 	"github.com/donetkit/gtool/os/gtime"
 	"github.com/donetkit/gtool/os/gtimer"
 )
@@ -36,10 +38,10 @@ type poolItem struct {
 	expireAt int64       // Expire timestamp in milliseconds.
 }
 
-// Creation function for object.
+// NewFunc Creation function for object.
 type NewFunc func() (interface{}, error)
 
-// Destruction function for object.
+// ExpireFunc Destruction function for object.
 type ExpireFunc func(interface{})
 
 // New creates and returns a new object pool.
@@ -59,14 +61,14 @@ func New(ttl time.Duration, newFunc NewFunc, expireFunc ...ExpireFunc) *Pool {
 	if len(expireFunc) > 0 {
 		r.ExpireFunc = expireFunc[0]
 	}
-	gtimer.AddSingleton(time.Second, r.checkExpireItems)
+	gtimer.AddSingleton(context.Background(), time.Second, r.checkExpireItems)
 	return r
 }
 
 // Put puts an item to pool.
 func (p *Pool) Put(value interface{}) error {
 	if p.closed.Val() {
-		return fmt.Errorf("pool is closed")
+		return gerror.NewCode(gcode.CodeInvalidOperation, "pool is closed")
 	}
 	item := &poolItem{
 		value: value,
@@ -117,7 +119,7 @@ func (p *Pool) Get() (interface{}, error) {
 	if p.NewFunc != nil {
 		return p.NewFunc()
 	}
-	return nil, fmt.Errorf("pool is empty")
+	return nil, gerror.NewCode(gcode.CodeInvalidOperation, "pool is empty")
 }
 
 // Size returns the count of available items of pool.
@@ -125,7 +127,7 @@ func (p *Pool) Size() int {
 	return p.list.Len()
 }
 
-// Close closes the pool. If <p> has ExpireFunc,
+// Close closes the pool. If `p` has ExpireFunc,
 // then it automatically closes all items using this function before it's closed.
 // Commonly you do not need call this function manually.
 func (p *Pool) Close() {
@@ -133,7 +135,7 @@ func (p *Pool) Close() {
 }
 
 // checkExpire removes expired items from pool in every second.
-func (p *Pool) checkExpireItems() {
+func (p *Pool) checkExpireItems(ctx context.Context) {
 	if p.closed.Val() {
 		// If p has ExpireFunc,
 		// then it must close all items using this function.
@@ -156,7 +158,7 @@ func (p *Pool) checkExpireItems() {
 	var latestExpire int64 = -1
 	// Retrieve the current timestamp in milliseconds, it expires the items
 	// by comparing with this timestamp. It is not accurate comparison for
-	// every items expired, but high performance.
+	// every item expired, but high performance.
 	var timestampMilli = gtime.TimestampMilli()
 	for {
 		if latestExpire > timestampMilli {

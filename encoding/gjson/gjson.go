@@ -2,18 +2,18 @@
 //
 // This Source Code Form is subject to the terms of the MIT License.
 // If a copy of the MIT was not distributed with this file,
-// You can obtain one at https://github.com/donetkit/gtool.
+// You can obtain one at https://github.com/gogf/gf.
 
 // Package gjson provides convenient API for JSON/XML/INI/YAML/TOML data handling.
 package gjson
 
 import (
-	"github.com/donetkit/gtool/internal/utils"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/donetkit/gtool/internal/rwmutex"
+	"github.com/donetkit/gtool/internal/utils"
 	"github.com/donetkit/gtool/text/gstr"
 	"github.com/donetkit/gtool/util/gconv"
 )
@@ -38,19 +38,19 @@ type Options struct {
 	StrNumber bool   // StrNumber causes the Decoder to unmarshal a number into an interface{} as a string instead of as a float64.
 }
 
-// apiInterface is used for type assert api for Interface().
-type apiInterface interface {
+// iInterface is used for type assert api for Interface().
+type iInterface interface {
 	Interface() interface{}
 }
 
-// setValue sets <value> to <j> by <pattern>.
+// setValue sets `value` to `j` by `pattern`.
 // Note:
 // 1. If value is nil and removed is true, means deleting this value;
 // 2. It's quite complicated in hierarchical data search, node creating and data assignment;
 func (j *Json) setValue(pattern string, value interface{}, removed bool) error {
 	if value != nil {
 		if utils.IsStruct(value) {
-			if v, ok := value.(apiInterface); ok {
+			if v, ok := value.(iInterface); ok {
 				value = v.Interface()
 			}
 		}
@@ -206,7 +206,7 @@ func (j *Json) setValue(pattern string, value interface{}, removed bool) error {
 				}
 			}
 
-		// If the variable pointed to by the <pointer> is not of a reference type,
+		// If the variable pointed to by the `pointer` is not of a reference type,
 		// then it modifies the variable via its the parent, ie: pparent.
 		default:
 			if removed && value == nil {
@@ -250,7 +250,7 @@ done:
 	return nil
 }
 
-// convertValue converts <value> to map[string]interface{} or []interface{},
+// convertValue converts `value` to map[string]interface{} or []interface{},
 // which can be supported for hierarchical data access.
 func (j *Json) convertValue(value interface{}) interface{} {
 	switch value.(type) {
@@ -259,13 +259,10 @@ func (j *Json) convertValue(value interface{}) interface{} {
 	case []interface{}:
 		return value
 	default:
-		rv := reflect.ValueOf(value)
-		kind := rv.Kind()
-		if kind == reflect.Ptr {
-			rv = rv.Elem()
-			kind = rv.Kind()
-		}
-		switch kind {
+		var (
+			reflectInfo = utils.OriginValueAndKind(value)
+		)
+		switch reflectInfo.OriginKind {
 		case reflect.Array:
 			return gconv.Interfaces(value)
 		case reflect.Slice:
@@ -283,7 +280,7 @@ func (j *Json) convertValue(value interface{}) interface{} {
 	}
 }
 
-// setPointerWithValue sets <key>:<value> to <pointer>, the <key> may be a map key or slice index.
+// setPointerWithValue sets `key`:`value` to `pointer`, the `key` may be a map key or slice index.
 // It returns the pointer to the new value set.
 func (j *Json) setPointerWithValue(pointer *interface{}, key string, value interface{}) *interface{} {
 	switch (*pointer).(type) {
@@ -308,7 +305,7 @@ func (j *Json) setPointerWithValue(pointer *interface{}, key string, value inter
 	return pointer
 }
 
-// getPointerByPattern returns a pointer to the value by specified <pattern>.
+// getPointerByPattern returns a pointer to the value by specified `pattern`.
 func (j *Json) getPointerByPattern(pattern string) *interface{} {
 	if j.vc {
 		return j.getPointerByPatternWithViolenceCheck(pattern)
@@ -317,22 +314,33 @@ func (j *Json) getPointerByPattern(pattern string) *interface{} {
 	}
 }
 
-// getPointerByPatternWithViolenceCheck returns a pointer to the value of specified <pattern> with violence check.
+// getPointerByPatternWithViolenceCheck returns a pointer to the value of specified `pattern` with violence check.
 func (j *Json) getPointerByPatternWithViolenceCheck(pattern string) *interface{} {
 	if !j.vc {
 		return j.getPointerByPatternWithoutViolenceCheck(pattern)
 	}
-	index := len(pattern)
-	start := 0
-	length := 0
-	pointer := j.p
+
+	// It returns nil if pattern is empty.
+	if pattern == "" {
+		return nil
+	}
+	// It returns all if pattern is ".".
+	if pattern == "." {
+		return j.p
+	}
+
+	var (
+		index   = len(pattern)
+		start   = 0
+		length  = 0
+		pointer = j.p
+	)
 	if index == 0 {
 		return pointer
 	}
 	for {
 		if r := j.checkPatternByPointer(pattern[start:index], pointer); r != nil {
-			length += index - start
-			if start > 0 {
+			if length += index - start; start > 0 {
 				length += 1
 			}
 			start = index + 1
@@ -356,11 +364,21 @@ func (j *Json) getPointerByPatternWithViolenceCheck(pattern string) *interface{}
 	return nil
 }
 
-// getPointerByPatternWithoutViolenceCheck returns a pointer to the value of specified <pattern>, with no violence check.
+// getPointerByPatternWithoutViolenceCheck returns a pointer to the value of specified `pattern`, with no violence check.
 func (j *Json) getPointerByPatternWithoutViolenceCheck(pattern string) *interface{} {
 	if j.vc {
 		return j.getPointerByPatternWithViolenceCheck(pattern)
 	}
+
+	// It returns nil if pattern is empty.
+	if pattern == "" {
+		return nil
+	}
+	// It returns all if pattern is ".".
+	if pattern == "." {
+		return j.p
+	}
+
 	pointer := j.p
 	if len(pattern) == 0 {
 		return pointer
@@ -380,7 +398,7 @@ func (j *Json) getPointerByPatternWithoutViolenceCheck(pattern string) *interfac
 	return nil
 }
 
-// checkPatternByPointer checks whether there's value by <key> in specified <pointer>.
+// checkPatternByPointer checks whether there's value by `key` in specified `pointer`.
 // It returns a pointer to the value.
 func (j *Json) checkPatternByPointer(key string, pointer *interface{}) *interface{} {
 	switch (*pointer).(type) {
