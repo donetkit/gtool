@@ -53,7 +53,6 @@ func Scan(params interface{}, pointer interface{}, mapping ...map[string]string)
 				pointerType,
 			)
 		}
-
 	}
 	// Direct assignment checks!
 	var (
@@ -105,7 +104,6 @@ func Scan(params interface{}, pointer interface{}, mapping ...map[string]string)
 		return doStructs(params, pointer, keyToAttributeNameMapping, "")
 
 	default:
-
 		return doStruct(params, pointer, keyToAttributeNameMapping, "")
 	}
 }

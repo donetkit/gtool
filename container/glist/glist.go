@@ -12,6 +12,7 @@ import (
 	"bytes"
 	"container/list"
 
+	"github.com/donetkit/gtool/internal/deepcopy"
 	"github.com/donetkit/gtool/internal/json"
 	"github.com/donetkit/gtool/internal/rwmutex"
 	"github.com/donetkit/gtool/util/gconv"
@@ -503,11 +504,14 @@ func (l *List) Join(glue string) string {
 
 // String returns current list as a string.
 func (l *List) String() string {
+	if l == nil {
+		return ""
+	}
 	return "[" + l.Join(",") + "]"
 }
 
 // MarshalJSON implements the interface MarshalJSON for json.Marshal.
-func (l *List) MarshalJSON() ([]byte, error) {
+func (l List) MarshalJSON() ([]byte, error) {
 	return json.Marshal(l.FrontAll())
 }
 
@@ -542,4 +546,28 @@ func (l *List) UnmarshalValue(value interface{}) (err error) {
 	}
 	l.PushBacks(array)
 	return err
+}
+
+// DeepCopy implements interface for deep copy of current type.
+func (l *List) DeepCopy() interface{} {
+	if l == nil {
+		return nil
+	}
+
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	if l.list == nil {
+		return nil
+	}
+	var (
+		length = l.list.Len()
+		values = make([]interface{}, length)
+	)
+	if length > 0 {
+		for i, e := 0, l.list.Front(); i < length; i, e = i+1, e.Next() {
+			values[i] = deepcopy.Copy(e.Value)
+		}
+	}
+	return NewFrom(values, l.mu.IsSafe())
 }

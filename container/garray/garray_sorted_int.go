@@ -646,6 +646,9 @@ func (a *SortedIntArray) IteratorDesc(f func(k int, v int) bool) {
 
 // String returns current array as a string, which implements like json.Marshal does.
 func (a *SortedIntArray) String() string {
+	if a == nil {
+		return ""
+	}
 	return "[" + a.Join(",") + "]"
 }
 
@@ -740,4 +743,16 @@ func (a *SortedIntArray) getComparator() func(a, b int) int {
 		return defaultComparatorInt
 	}
 	return a.comparator
+}
+
+// DeepCopy implements interface for deep copy of current type.
+func (a *SortedIntArray) DeepCopy() interface{} {
+	if a == nil {
+		return nil
+	}
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	newSlice := make([]int, len(a.array))
+	copy(newSlice, a.array)
+	return NewSortedIntArrayFrom(newSlice, a.mu.IsSafe())
 }

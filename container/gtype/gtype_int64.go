@@ -60,7 +60,7 @@ func (v *Int64) String() string {
 }
 
 // MarshalJSON implements the interface MarshalJSON for json.Marshal.
-func (v *Int64) MarshalJSON() ([]byte, error) {
+func (v Int64) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.FormatInt(v.Val(), 10)), nil
 }
 
@@ -74,4 +74,12 @@ func (v *Int64) UnmarshalJSON(b []byte) error {
 func (v *Int64) UnmarshalValue(value interface{}) error {
 	v.Set(gconv.Int64(value))
 	return nil
+}
+
+// DeepCopy implements interface for deep copy of current type.
+func (v *Int64) DeepCopy() interface{} {
+	if v == nil {
+		return nil
+	}
+	return NewInt64(v.Val())
 }

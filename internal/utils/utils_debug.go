@@ -15,8 +15,8 @@ const (
 	commandEnvKeyForDebugKey = "gf.debug"
 
 	// StackFilterKeyForGoFrame is the stack filtering key for all GoFrame module paths.
-	// Eg: .../pkg/mod/github.com/donetkit/gtool@v2.0.0-20211011134327-54dd11f51122/debug/gdebug/gdebug_caller.go
-	StackFilterKeyForGoFrame = "github.com/gogf/gf/v"
+	// Eg: .../pkg/mod/github.com/donetkit/gtool/@v2.0.0-20211011134327-54dd11f51122/debug/gdebug/gdebug_caller.go
+	StackFilterKeyForGoFrame = "github.com/gogf/gf/"
 )
 
 var (
@@ -38,4 +38,9 @@ func init() {
 // The debug mode is enabled when command argument "gf.debug" or environment "GF_DEBUG" is passed.
 func IsDebugEnabled() bool {
 	return isDebugEnabled
+}
+
+// SetDebugEnabled enables/disables the internal debug info.
+func SetDebugEnabled(enabled bool) {
+	isDebugEnabled = enabled
 }

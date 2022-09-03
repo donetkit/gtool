@@ -78,7 +78,7 @@ func (v *Bool) String() string {
 }
 
 // MarshalJSON implements the interface MarshalJSON for json.Marshal.
-func (v *Bool) MarshalJSON() ([]byte, error) {
+func (v Bool) MarshalJSON() ([]byte, error) {
 	if v.Val() {
 		return bytesTrue, nil
 	}
@@ -95,4 +95,12 @@ func (v *Bool) UnmarshalJSON(b []byte) error {
 func (v *Bool) UnmarshalValue(value interface{}) error {
 	v.Set(gconv.Bool(value))
 	return nil
+}
+
+// DeepCopy implements interface for deep copy of current type.
+func (v *Bool) DeepCopy() interface{} {
+	if v == nil {
+		return nil
+	}
+	return NewBool(v.Val())
 }

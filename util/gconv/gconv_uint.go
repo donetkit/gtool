@@ -7,6 +7,7 @@
 package gconv
 
 import (
+	"math"
 	"strconv"
 
 	"github.com/donetkit/gtool/encoding/gbinary"
@@ -104,17 +105,15 @@ func Uint64(any interface{}) uint64 {
 				return v
 			}
 		}
-		// Octal
-		if len(s) > 1 && s[0] == '0' {
-			if v, e := strconv.ParseUint(s[1:], 8, 64); e == nil {
-				return v
-			}
-		}
 		// Decimal
 		if v, e := strconv.ParseUint(s, 10, 64); e == nil {
 			return v
 		}
 		// Float64
-		return uint64(Float64(value))
+		if valueFloat64 := Float64(value); math.IsNaN(valueFloat64) {
+			return 0
+		} else {
+			return uint64(valueFloat64)
+		}
 	}
 }

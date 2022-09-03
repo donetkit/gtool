@@ -9,6 +9,7 @@ package gmap
 
 import (
 	"github.com/donetkit/gtool/container/gvar"
+	"github.com/donetkit/gtool/internal/deepcopy"
 	"github.com/donetkit/gtool/internal/empty"
 	"github.com/donetkit/gtool/internal/json"
 	"github.com/donetkit/gtool/internal/rwmutex"
@@ -455,12 +456,15 @@ func (m *IntAnyMap) Merge(other *IntAnyMap) {
 
 // String returns the map as a string.
 func (m *IntAnyMap) String() string {
+	if m == nil {
+		return ""
+	}
 	b, _ := m.MarshalJSON()
 	return string(b)
 }
 
 // MarshalJSON implements the interface MarshalJSON for json.Marshal.
-func (m *IntAnyMap) MarshalJSON() ([]byte, error) {
+func (m IntAnyMap) MarshalJSON() ([]byte, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return json.Marshal(m.data)
@@ -495,4 +499,18 @@ func (m *IntAnyMap) UnmarshalValue(value interface{}) (err error) {
 		}
 	}
 	return
+}
+
+// DeepCopy implements interface for deep copy of current type.
+func (m *IntAnyMap) DeepCopy() interface{} {
+	if m == nil {
+		return nil
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	data := make(map[int]interface{}, len(m.data))
+	for k, v := range m.data {
+		data[k] = deepcopy.Copy(v)
+	}
+	return NewIntAnyMapFrom(data, m.mu.IsSafe())
 }

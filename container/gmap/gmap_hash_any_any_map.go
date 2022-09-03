@@ -8,12 +8,14 @@ package gmap
 
 import (
 	"github.com/donetkit/gtool/container/gvar"
+	"github.com/donetkit/gtool/internal/deepcopy"
 	"github.com/donetkit/gtool/internal/empty"
 	"github.com/donetkit/gtool/internal/json"
 	"github.com/donetkit/gtool/internal/rwmutex"
 	"github.com/donetkit/gtool/util/gconv"
 )
 
+// AnyAnyMap wraps map type `map[interface{}]interface{}` and provides more map features.
 type AnyAnyMap struct {
 	mu   rwmutex.RWMutex
 	data map[interface{}]interface{}
@@ -72,7 +74,7 @@ func (m *AnyAnyMap) Map() map[interface{}]interface{} {
 	return data
 }
 
-// MapCopy returns a copy of the underlying data of the hash map.
+// MapCopy returns a shallow copy of the underlying data of the hash map.
 func (m *AnyAnyMap) MapCopy() map[interface{}]interface{} {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -456,12 +458,15 @@ func (m *AnyAnyMap) Merge(other *AnyAnyMap) {
 
 // String returns the map as a string.
 func (m *AnyAnyMap) String() string {
+	if m == nil {
+		return ""
+	}
 	b, _ := m.MarshalJSON()
 	return string(b)
 }
 
 // MarshalJSON implements the interface MarshalJSON for json.Marshal.
-func (m *AnyAnyMap) MarshalJSON() ([]byte, error) {
+func (m AnyAnyMap) MarshalJSON() ([]byte, error) {
 	return json.Marshal(gconv.Map(m.Map()))
 }
 
@@ -493,4 +498,19 @@ func (m *AnyAnyMap) UnmarshalValue(value interface{}) (err error) {
 		m.data[k] = v
 	}
 	return
+}
+
+// DeepCopy implements interface for deep copy of current type.
+func (m *AnyAnyMap) DeepCopy() interface{} {
+	if m == nil {
+		return nil
+	}
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	data := make(map[interface{}]interface{}, len(m.data))
+	for k, v := range m.data {
+		data[k] = deepcopy.Copy(v)
+	}
+	return NewFrom(data, m.mu.IsSafe())
 }

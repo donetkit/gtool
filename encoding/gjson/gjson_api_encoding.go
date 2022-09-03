@@ -8,6 +8,7 @@ package gjson
 
 import (
 	"github.com/donetkit/gtool/encoding/gini"
+	"github.com/donetkit/gtool/encoding/gproperties"
 	"github.com/donetkit/gtool/encoding/gtoml"
 	"github.com/donetkit/gtool/encoding/gxml"
 	"github.com/donetkit/gtool/encoding/gyaml"
@@ -120,6 +121,12 @@ func (j *Json) ToYaml() ([]byte, error) {
 	return gyaml.Encode(*(j.p))
 }
 
+func (j *Json) ToYamlIndent(indent string) ([]byte, error) {
+	j.mu.RLock()
+	defer j.mu.RUnlock()
+	return gyaml.EncodeIndent(*(j.p), indent)
+}
+
 func (j *Json) ToYamlString() (string, error) {
 	b, e := j.ToYaml()
 	return string(b), e
@@ -170,9 +177,7 @@ func (j *Json) MustToTomlString() string {
 
 // ToIni json to ini
 func (j *Json) ToIni() ([]byte, error) {
-	j.mu.RLock()
-	defer j.mu.RUnlock()
-	return gini.Encode((*(j.p)).(map[string]interface{}))
+	return gini.Encode(j.Map())
 }
 
 // ToIniString ini to string
@@ -192,4 +197,31 @@ func (j *Json) MustToIni() []byte {
 // MustToIniString .
 func (j *Json) MustToIniString() string {
 	return string(j.MustToIni())
+}
+
+// ========================================================================
+// properties
+// ========================================================================
+// Toproperties json to properties
+func (j *Json) ToProperties() ([]byte, error) {
+	return gproperties.Encode(j.Map())
+}
+
+// TopropertiesString properties to string
+func (j *Json) ToPropertiesString() (string, error) {
+	b, e := j.ToProperties()
+	return string(b), e
+}
+
+func (j *Json) MustToProperties() []byte {
+	result, err := j.ToProperties()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// MustTopropertiesString
+func (j *Json) MustToPropertiesString() string {
+	return string(j.MustToProperties())
 }

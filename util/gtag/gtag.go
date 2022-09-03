@@ -6,51 +6,60 @@
 
 // Package gtag providing tag content storing for struct.
 //
-// Note that calling functions of this package is concurrently safe.
+// Note that calling functions of this package is not concurrently safe,
+// which means you cannot call them in runtime but in boot procedure.
 package gtag
 
 import (
 	"regexp"
-	"sync"
+
+	"github.com/donetkit/gtool/errors/gerror"
 )
 
 var (
-	mu    sync.RWMutex
 	data  = make(map[string]string)
 	regex = regexp.MustCompile(`\{(.+?)\}`)
 )
 
 // Set sets tag content for specified name.
+// Note that it panics if `name` already exists.
 func Set(name, value string) {
-	mu.Lock()
-	defer mu.Unlock()
+	if _, ok := data[name]; ok {
+		panic(gerror.Newf(`value for tag name "%s" already exists`, name))
+	}
+	data[name] = value
+}
+
+// SetOver performs as Set, but it overwrites the old value if `name` already exists.
+func SetOver(name, value string) {
 	data[name] = value
 }
 
 // Sets sets multiple tag content by map.
 func Sets(m map[string]string) {
-	mu.Lock()
-	defer mu.Unlock()
 	for k, v := range m {
-		data[k] = v
+		Set(k, v)
+	}
+}
+
+// SetsOver performs as Sets, but it overwrites the old value if `name` already exists.
+func SetsOver(m map[string]string) {
+	for k, v := range m {
+		SetOver(k, v)
 	}
 }
 
 // Get retrieves and returns the stored tag content for specified name.
 func Get(name string) string {
-	mu.RLock()
-	defer mu.RUnlock()
 	return data[name]
 }
 
 // Parse parses and returns the content by replacing all tag name variable to
 // its content for given `content`.
 // Eg:
-// If "Demo:content" in tag mapping,
-// Parse(`This is {Demo}`) -> `This is content`.
+// gtag.Set("demo", "content")
+// Parse(`This is {demo}`) -> `This is content`.
 func Parse(content string) string {
-	mu.RLock()
-	defer mu.RUnlock()
 	return regex.ReplaceAllStringFunc(content, func(s string) string {
 		if v, ok := data[s[1:len(s)-1]]; ok {
 			return v

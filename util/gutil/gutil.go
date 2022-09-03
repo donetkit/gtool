@@ -8,10 +8,9 @@
 package gutil
 
 import (
-	"fmt"
+	"context"
 	"reflect"
 
-	"github.com/donetkit/gtool/errors/gcode"
 	"github.com/donetkit/gtool/errors/gerror"
 	"github.com/donetkit/gtool/internal/empty"
 	"github.com/donetkit/gtool/util/gconv"
@@ -28,33 +27,33 @@ func Throw(exception interface{}) {
 
 // Try implements try... logistics using internal panic...recover.
 // It returns error if any exception occurs, or else it returns nil.
-func Try(try func()) (err error) {
+func Try(ctx context.Context, try func(ctx context.Context)) (err error) {
 	defer func() {
 		if exception := recover(); exception != nil {
 			if v, ok := exception.(error); ok && gerror.HasStack(v) {
 				err = v
 			} else {
-				err = gerror.NewCodef(gcode.CodeInternalError, `%+v`, exception)
+				err = gerror.Newf(`%+v`, exception)
 			}
 		}
 	}()
-	try()
+	try(ctx)
 	return
 }
 
 // TryCatch implements try...catch... logistics using internal panic...recover.
-// It automatically calls function `catch` if any exception occurs ans passes the exception as an error.
-func TryCatch(try func(), catch ...func(exception error)) {
+// It automatically calls function `catch` if any exception occurs and passes the exception as an error.
+func TryCatch(ctx context.Context, try func(ctx context.Context), catch ...func(ctx context.Context, exception error)) {
 	defer func() {
 		if exception := recover(); exception != nil && len(catch) > 0 {
 			if v, ok := exception.(error); ok && gerror.HasStack(v) {
-				catch[0](v)
+				catch[0](ctx, v)
 			} else {
-				catch[0](fmt.Errorf(`%+v`, exception))
+				catch[0](ctx, gerror.Newf(`%+v`, exception))
 			}
 		}
 	}()
-	try()
+	try(ctx)
 }
 
 // IsEmpty checks given `value` empty or not.
@@ -68,7 +67,7 @@ func IsEmpty(value interface{}) bool {
 func Keys(mapOrStruct interface{}) (keysOrAttrs []string) {
 	keysOrAttrs = make([]string, 0)
 	if m, ok := mapOrStruct.(map[string]interface{}); ok {
-		for k, _ := range m {
+		for k := range m {
 			keysOrAttrs = append(keysOrAttrs, k)
 		}
 		return

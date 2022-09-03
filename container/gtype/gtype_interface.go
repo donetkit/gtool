@@ -9,6 +9,7 @@ package gtype
 import (
 	"sync/atomic"
 
+	"github.com/donetkit/gtool/internal/deepcopy"
 	"github.com/donetkit/gtool/internal/json"
 	"github.com/donetkit/gtool/util/gconv"
 )
@@ -52,15 +53,14 @@ func (v *Interface) String() string {
 }
 
 // MarshalJSON implements the interface MarshalJSON for json.Marshal.
-func (v *Interface) MarshalJSON() ([]byte, error) {
+func (v Interface) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.Val())
 }
 
 // UnmarshalJSON implements the interface UnmarshalJSON for json.Unmarshal.
 func (v *Interface) UnmarshalJSON(b []byte) error {
 	var i interface{}
-	err := json.UnmarshalUseNumber(b, &i)
-	if err != nil {
+	if err := json.UnmarshalUseNumber(b, &i); err != nil {
 		return err
 	}
 	v.Set(i)
@@ -71,4 +71,12 @@ func (v *Interface) UnmarshalJSON(b []byte) error {
 func (v *Interface) UnmarshalValue(value interface{}) error {
 	v.Set(value)
 	return nil
+}
+
+// DeepCopy implements interface for deep copy of current type.
+func (v *Interface) DeepCopy() interface{} {
+	if v == nil {
+		return nil
+	}
+	return NewInterface(deepcopy.Copy(v.Val()))
 }

@@ -430,12 +430,15 @@ func (m *StrIntMap) Merge(other *StrIntMap) {
 
 // String returns the map as a string.
 func (m *StrIntMap) String() string {
+	if m == nil {
+		return ""
+	}
 	b, _ := m.MarshalJSON()
 	return string(b)
 }
 
 // MarshalJSON implements the interface MarshalJSON for json.Marshal.
-func (m *StrIntMap) MarshalJSON() ([]byte, error) {
+func (m StrIntMap) MarshalJSON() ([]byte, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return json.Marshal(m.data)
@@ -470,4 +473,18 @@ func (m *StrIntMap) UnmarshalValue(value interface{}) (err error) {
 		}
 	}
 	return
+}
+
+// DeepCopy implements interface for deep copy of current type.
+func (m *StrIntMap) DeepCopy() interface{} {
+	if m == nil {
+		return nil
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	data := make(map[string]int, len(m.data))
+	for k, v := range m.data {
+		data[k] = v
+	}
+	return NewStrIntMapFrom(data, m.mu.IsSafe())
 }

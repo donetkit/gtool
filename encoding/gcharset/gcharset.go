@@ -21,13 +21,14 @@ package gcharset
 
 import (
 	"bytes"
-	"github.com/donetkit/gtool/errors/gcode"
-	"github.com/donetkit/gtool/errors/gerror"
 	"io/ioutil"
 
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/ianaindex"
 	"golang.org/x/text/transform"
+
+	"github.com/donetkit/gtool/errors/gcode"
+	"github.com/donetkit/gtool/errors/gerror"
 )
 
 var (
@@ -60,11 +61,11 @@ func Convert(dstCharset string, srcCharset string, src string) (dst string, err 
 				transform.NewReader(bytes.NewReader([]byte(src)), e.NewDecoder()),
 			)
 			if err != nil {
-				return "", gerror.WrapCodef(gcode.CodeInternalError, err, "%s to utf8 failed", srcCharset)
+				return "", gerror.Wrapf(err, `convert string "%s" to utf8 failed`, srcCharset)
 			}
 			src = string(tmp)
 		} else {
-			return dst, gerror.NewCodef(gcode.CodeInvalidParameter, "unsupported srcCharset: %s", srcCharset)
+			return dst, gerror.NewCodef(gcode.CodeInvalidParameter, `unsupported srcCharset "%s"`, srcCharset)
 		}
 	}
 	// Do the converting from UTF-8 to `dstCharset`.
@@ -74,11 +75,11 @@ func Convert(dstCharset string, srcCharset string, src string) (dst string, err 
 				transform.NewReader(bytes.NewReader([]byte(src)), e.NewEncoder()),
 			)
 			if err != nil {
-				return "", gerror.WrapCodef(gcode.CodeInternalError, err, "utf to %s failed", dstCharset)
+				return "", gerror.Wrapf(err, `convert string from utf8 to "%s" failed`, dstCharset)
 			}
 			dst = string(tmp)
 		} else {
-			return dst, gerror.NewCodef(gcode.CodeInvalidParameter, "unsupported dstCharset: %s", dstCharset)
+			return dst, gerror.NewCodef(gcode.CodeInvalidParameter, `unsupported dstCharset "%s"`, dstCharset)
 		}
 	} else {
 		dst = src
@@ -106,7 +107,7 @@ func getEncoding(charset string) encoding.Encoding {
 	}
 	enc, err := ianaindex.MIB.Encoding(charset)
 	if err != nil {
-
+		//intlog.Errorf(context.TODO(), `%+v`, err)
 	}
 	return enc
 }

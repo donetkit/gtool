@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"sync/atomic"
 
+	"github.com/donetkit/gtool/errors/gerror"
 	"github.com/donetkit/gtool/util/gconv"
 )
 
@@ -29,7 +30,7 @@ func NewBytes(value ...[]byte) *Bytes {
 	return t
 }
 
-// Clone clones and returns a new concurrent-safe object for []byte type.
+// Clone clones and returns a new shallow copy object for []byte type.
 func (v *Bytes) Clone() *Bytes {
 	return NewBytes(v.Val())
 }
@@ -56,7 +57,7 @@ func (v *Bytes) String() string {
 }
 
 // MarshalJSON implements the interface MarshalJSON for json.Marshal.
-func (v *Bytes) MarshalJSON() ([]byte, error) {
+func (v Bytes) MarshalJSON() ([]byte, error) {
 	val := v.Val()
 	dst := make([]byte, base64.StdEncoding.EncodedLen(len(val)))
 	base64.StdEncoding.Encode(dst, val)
@@ -65,10 +66,13 @@ func (v *Bytes) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements the interface UnmarshalJSON for json.Unmarshal.
 func (v *Bytes) UnmarshalJSON(b []byte) error {
-	src := make([]byte, base64.StdEncoding.DecodedLen(len(b)))
-	n, err := base64.StdEncoding.Decode(src, bytes.Trim(b, `"`))
+	var (
+		src    = make([]byte, base64.StdEncoding.DecodedLen(len(b)))
+		n, err = base64.StdEncoding.Decode(src, bytes.Trim(b, `"`))
+	)
 	if err != nil {
-		return nil
+		err = gerror.Wrap(err, `base64.StdEncoding.Decode failed`)
+		return err
 	}
 	v.Set(src[:n])
 	return nil
@@ -78,4 +82,15 @@ func (v *Bytes) UnmarshalJSON(b []byte) error {
 func (v *Bytes) UnmarshalValue(value interface{}) error {
 	v.Set(gconv.Bytes(value))
 	return nil
+}
+
+// DeepCopy implements interface for deep copy of current type.
+func (v *Bytes) DeepCopy() interface{} {
+	if v == nil {
+		return nil
+	}
+	oldBytes := v.Val()
+	newBytes := make([]byte, len(oldBytes))
+	copy(newBytes, oldBytes)
+	return NewBytes(newBytes)
 }
