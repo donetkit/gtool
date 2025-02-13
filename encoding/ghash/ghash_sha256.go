@@ -5,12 +5,12 @@ import (
 	"encoding/hex"
 )
 
-func Sha256(input string) string {
+func Sha256(input []byte) string {
 	// 创建一个新的 SHA-256 哈希接口
 	data := sha256.New()
 
 	// 将输入字符串写入哈希接口中
-	data.Write([]byte(input))
+	data.Write(input)
 
 	// 计算哈希值，并返回其字节切片表示形式
 	hashBytes := data.Sum(nil)
