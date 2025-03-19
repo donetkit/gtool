@@ -12,3 +12,7 @@ func Fnv(input []byte) string {
 
 	return strconv.FormatUint(hash.Sum64(), 16)
 }
+
+func FnvString(input string) string {
+	return Fnv([]byte(input))
+}
